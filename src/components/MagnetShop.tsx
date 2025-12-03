@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGameStore, COSTS, MagnetType, CoolingType, CoilType, GradientType, UNLOCK_THRESHOLDS, SubjectType } from '../store/gameStore';
 import { ChevronRight, Zap, Thermometer, Activity, Cpu, Lock, GraduationCap, Coins, Gauge, ShoppingCart } from 'lucide-react';
+import ScientificCitation from './ScientificCitation';
 
 const MagnetShop: React.FC = () => {
   const { budget, prestige, day, labSetup, unlockedMagnets, purchaseItem, setGameStage, subjectType, setSubjectType, tutorialActive, tutorialStep, nextTutorialStep } = useGameStore();
@@ -56,6 +57,14 @@ const MagnetShop: React.FC = () => {
                     {SUBJECTS.map((sub) => {
                     const locked = prestige < sub.reqPrestige;
                     const active = subjectType === sub.type;
+                    
+                    const content = (
+                        <div className="flex justify-between items-center z-10 relative">
+                            <span className={`font-bold ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{sub.type}</span>
+                            {locked ? <Lock className="w-3 h-3 text-slate-600" /> : <span className="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-700">x{sub.rewardMult} REWARD</span>}
+                        </div>
+                    );
+
                     return (
                         <button
                         key={sub.type}
@@ -71,14 +80,16 @@ const MagnetShop: React.FC = () => {
                             ? 'border-blue-500 bg-blue-900/20 shadow-[0_0_20px_rgba(59,130,246,0.15)]'
                             : locked 
                                 ? 'border-slate-800 bg-slate-900/30 opacity-50 cursor-not-allowed'
-                                : 'border-slate-800 hover:border-blue-500/50 bg-slate-900/50 hover:bg-slate-800 hover:-translate-y-0.5 hover:shadow-lg'
+                                : 'border-slate-800 hover:border-blue-500/50 bg-slate-950/50 hover:bg-slate-800 hover:-translate-y-0.5 hover:shadow-lg'
                         }`}
                         >
-                        <div className="flex justify-between items-center z-10 relative">
-                            <span className={`font-bold ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>{sub.type}</span>
-                            {locked ? <Lock className="w-3 h-3 text-slate-600" /> : <span className="text-[10px] font-mono bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-700">x{sub.rewardMult} REWARD</span>}
-                        </div>
-                        {locked && <div className="text-[10px] text-red-400/80 mt-2 font-mono uppercase tracking-wide">REQ: {sub.reqPrestige} PRESTIGE</div>}
+                             {sub.type === 'Pediatric' || sub.type === 'Neonate' ? (
+                                <ScientificCitation refId="Pediatric" position="right">
+                                    {content}
+                                </ScientificCitation>
+                            ) : content}
+                            
+                            {locked && <div className="text-[10px] text-red-400/80 mt-2 font-mono uppercase tracking-wide">REQ: {sub.reqPrestige} PRESTIGE</div>}
                         </button>
                     )
                     })}
@@ -99,6 +110,15 @@ const MagnetShop: React.FC = () => {
                 const isUnlocked = unlockedMagnets.includes(type);
                 const cost = COSTS.magnet[type];
                 const active = labSetup.magnetType === type;
+                
+                const content = (
+                    <div className="flex justify-between items-start">
+                        <span className={`text-2xl font-bold tracking-tighter ${active ? 'text-yellow-400' : 'text-slate-300'}`}>{type}</span>
+                        {!isUnlocked && <Lock className="w-4 h-4 text-slate-600" />}
+                        {active && <span className="text-[10px] bg-yellow-900/40 text-yellow-200 px-2 py-0.5 rounded border border-yellow-700/50 uppercase tracking-wide shadow-[0_0_10px_rgba(234,179,8,0.2)]">Owned</span>}
+                    </div>
+                );
+
                 return (
                     <button
                     key={type}
@@ -112,11 +132,16 @@ const MagnetShop: React.FC = () => {
                             : 'border-slate-800 hover:border-yellow-500/50 bg-slate-950/50 hover:bg-slate-800 hover:-translate-y-1 hover:shadow-lg'
                     }`}
                     >
-                        <div className="flex justify-between items-start">
-                            <span className={`text-2xl font-bold tracking-tighter ${active ? 'text-yellow-400' : 'text-slate-300'}`}>{type}</span>
-                            {!isUnlocked && <Lock className="w-4 h-4 text-slate-600" />}
-                            {active && <span className="text-[10px] bg-yellow-900/40 text-yellow-200 px-2 py-0.5 rounded border border-yellow-700/50 uppercase tracking-wide shadow-[0_0_10px_rgba(234,179,8,0.2)]">Owned</span>}
-                        </div>
+                         {type === '11.7T' ? (
+                            <ScientificCitation refId="11.7T" position="bottom">
+                                {content}
+                            </ScientificCitation>
+                        ) : type === '7T' ? (
+                             <ScientificCitation refId="7T" position="bottom">
+                                {content}
+                            </ScientificCitation>
+                        ) : content}
+
                         <div>
                             <div className="text-xs font-mono text-slate-500 mb-1">${cost.toLocaleString()}</div>
                             {!isUnlocked && <div className="text-[10px] text-slate-500 font-mono uppercase">Unlock: {UNLOCK_THRESHOLDS[type]} Prestige</div>}
@@ -135,6 +160,14 @@ const MagnetShop: React.FC = () => {
             <div className="space-y-3">
                 {(['Standard', 'Superfluid'] as CoolingType[]).map((type) => {
                 const active = labSetup.coolingSystem === type;
+                
+                const content = (
+                    <div>
+                        <div className={`font-bold text-sm ${active ? 'text-cyan-400' : 'text-slate-300'}`}>{type === 'Superfluid' ? '1.8K Superfluid' : 'Standard 4.2K'}</div>
+                        <div className="text-[10px] font-mono text-slate-500 mt-0.5">${COSTS.cooling[type].toLocaleString()}</div>
+                    </div>
+                );
+
                 return (
                     <button
                         key={type}
@@ -146,10 +179,12 @@ const MagnetShop: React.FC = () => {
                             : 'border-slate-800 hover:border-cyan-500/50 bg-slate-950/50 hover:bg-slate-800 hover:-translate-y-0.5'
                         }`}
                     >
-                        <div>
-                            <div className={`font-bold text-sm ${active ? 'text-cyan-400' : 'text-slate-300'}`}>{type === 'Superfluid' ? '1.8K Superfluid' : 'Standard 4.2K'}</div>
-                            <div className="text-[10px] font-mono text-slate-500 mt-0.5">${COSTS.cooling[type].toLocaleString()}</div>
-                        </div>
+                        {type === 'Superfluid' ? (
+                             <ScientificCitation refId="Superfluid" position="right">
+                                {content}
+                            </ScientificCitation>
+                        ) : content}
+
                         {active ? (
                             <span className="text-[10px] bg-cyan-900/40 text-cyan-200 px-2 py-0.5 rounded border border-cyan-700/50 uppercase tracking-wide shadow-[0_0_10px_rgba(6,182,212,0.2)]">Installed</span>
                         ) : (
@@ -198,7 +233,10 @@ const MagnetShop: React.FC = () => {
            {/* Gradient Systems */}
            <div className="bg-slate-900/80 p-6 rounded-xl border border-slate-800/60 backdrop-blur-md shadow-xl hover:border-slate-700/80 transition-colors">
             <h2 className="flex items-center gap-2 font-bold text-slate-300 uppercase tracking-wider text-xs mb-6 border-b border-slate-800 pb-2">
-              <Gauge className="w-4 h-4 text-orange-500" /> Gradients (dB/dt)
+              <Gauge className="w-4 h-4 text-orange-500" /> 
+              <ScientificCitation refId="Gradient" position="left">
+                <span className="border-b border-dashed border-slate-700 hover:border-orange-500 hover:text-orange-400 transition-colors cursor-help">Gradients (dB/dt)</span>
+              </ScientificCitation>
             </h2>
             <div className="space-y-3">
                 {(['Standard', 'HighPerf', 'Connectome'] as GradientType[]).map((type) => {
@@ -248,7 +286,9 @@ const MagnetShop: React.FC = () => {
               }`}
             >
               <div>
-                <div className={`font-bold text-sm ${labSetup.pTxEnabled ? 'text-purple-400' : 'text-slate-300'}`}>pTx Transmit System</div>
+                <ScientificCitation refId="pTx" position="left">
+                    <div className={`font-bold text-sm w-fit border-b border-dashed border-slate-700 hover:border-purple-400 ${labSetup.pTxEnabled ? 'text-purple-400' : 'text-slate-300'}`}>pTx Transmit System</div>
+                </ScientificCitation>
                 <div className="text-[10px] font-mono text-slate-500 mt-0.5">${COSTS.pTx.toLocaleString()}</div>
               </div>
               {labSetup.pTxEnabled ? (

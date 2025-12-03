@@ -5,13 +5,19 @@ import SafetyConsole from './components/SafetyConsole';
 import ExperimentReview from './components/ExperimentReview';
 import StartScreen from './components/StartScreen';
 import TutorialOverlay from './components/TutorialOverlay';
+import NeuroFilesGame from './components/NeuroFilesGame';
 import { Activity } from 'lucide-react';
 
 function App() {
-  const { gameStage, setGameStage } = useGameStore();
+  const { gameStage, setGameStage, selectedTheme } = useGameStore();
 
   if (gameStage === 'start') {
     return <StartScreen />;
+  }
+
+  // Route to Neuro-Files Game if "Invasive Optical Stimulation" is selected
+  if (selectedTheme === 'optical_stim') {
+    return <NeuroFilesGame />;
   }
 
   return (

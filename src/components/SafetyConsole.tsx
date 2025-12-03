@@ -3,6 +3,7 @@ import { useGameStore, SequenceType } from '../store/gameStore';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, AreaChart, Area } from 'recharts';
 import { AlertTriangle, CheckCircle, Play, ShieldCheck, Brain, Sliders, Microscope, Target, Zap, Gauge } from 'lucide-react';
 import TechSlider from './TechSlider';
+import ScientificCitation from './ScientificCitation';
 
 const SafetyConsole: React.FC = () => {
   const { experimentParams, scanParams, shimming, labSetup, setExperimentParam, setScanParam, setShimming, toggleChecklist, setGameStage, tutorialActive, tutorialStep } = useGameStore();
@@ -73,6 +74,19 @@ const SafetyConsole: React.FC = () => {
     return null;
   };
 
+  // Visualization of Shimming Distortions
+  // We apply skew and scale transforms based on shim errors
+  const shimTransform = `
+    perspective(1000px)
+    rotateX(${shimming.y / 5}deg) 
+    rotateY(${shimming.x / 5}deg) 
+    scale(${1 + shimming.z / 200})
+  `;
+
+  // New: Shim Quality Check
+  const isShimGood = shimError < 15; // Threshold for green grid
+  const gridColor = isShimGood ? 'rgba(0, 255, 128, 0.3)' : 'rgba(255, 50, 50, 0.4)'; // Green vs Red
+
   return (
     <div className="p-6 max-w-7xl mx-auto text-slate-200 relative animate-in fade-in duration-500">
       <header className="mb-8 flex justify-between items-end border-b border-slate-800 pb-6">
@@ -105,28 +119,48 @@ const SafetyConsole: React.FC = () => {
                 </h3>
                 
                 <div className="flex gap-2 bg-slate-950/50 p-1 rounded-lg border border-slate-800">
-                    {(['GRE', 'SE', 'EPI'] as SequenceType[]).map(seq => (
-                        <button 
-                            key={seq}
-                            onClick={() => setScanParam({ sequence: seq })}
-                            className={`flex-1 py-1.5 text-[10px] font-bold font-mono uppercase tracking-wider rounded transition-all ${scanParams.sequence === seq ? 'bg-purple-600 text-white shadow-[0_0_10px_rgba(147,51,234,0.4)]' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
-                        >
-                            {seq}
-                        </button>
-                    ))}
+                    {(['GRE', 'SE', 'EPI'] as SequenceType[]).map(seq => {
+                         const content = (
+                            <button 
+                                onClick={() => setScanParam({ sequence: seq })}
+                                className={`w-full h-full py-1.5 text-[10px] font-bold font-mono uppercase tracking-wider rounded transition-all ${scanParams.sequence === seq ? 'bg-purple-600 text-white shadow-[0_0_10px_rgba(147,51,234,0.4)]' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'}`}
+                            >
+                                {seq}
+                            </button>
+                        );
+
+                        return (
+                             <div className="flex-1" key={seq}>
+                                <ScientificCitation 
+                                    refId={seq === 'GRE' ? 'GRE' : seq === 'SE' ? 'SE' : 'EPI'} 
+                                    position="top"
+                                    className="block w-full h-full"
+                                >
+                                    {content}
+                                </ScientificCitation>
+                             </div>
+                        );
+                    })}
                 </div>
 
                 <div className="space-y-6">
-                    <TechSlider 
-                        label="Resolution"
-                        value={scanParams.resolution}
-                        min={0.2}
-                        max={3.0}
-                        step={0.1}
-                        unit="mm"
-                        color="purple"
-                        onChange={(val) => setScanParam({ resolution: val })}
-                    />
+                    <div className="relative">
+                        <ScientificCitation refId="Mesoscopic" position="right">
+                             <div className="absolute -top-1 right-0 text-[9px] text-purple-400/60 font-mono uppercase tracking-wider cursor-help hover:text-purple-300 border-b border-dashed border-purple-400/30">
+                                Target: Mesoscopic
+                             </div>
+                        </ScientificCitation>
+                        <TechSlider 
+                            label="Resolution"
+                            value={scanParams.resolution}
+                            min={0.2}
+                            max={3.0}
+                            step={0.1}
+                            unit="mm"
+                            color="purple"
+                            onChange={(val) => setScanParam({ resolution: val })}
+                        />
+                    </div>
 
                     <TechSlider 
                         label="Scan Duration"
@@ -165,7 +199,9 @@ const SafetyConsole: React.FC = () => {
                 {/* PNS Meter */}
                 <div>
                    <div className="flex justify-between text-xs mb-2 font-mono uppercase tracking-wide">
-                       <span className="text-slate-400">PNS Risk</span>
+                       <ScientificCitation refId="SAR" position="right">
+                           <span className="text-slate-400 border-b border-dashed border-slate-700 hover:text-blue-400 hover:border-blue-400 transition-colors cursor-help">PNS Risk / SAR</span>
+                       </ScientificCitation>
                        <span className={isPNSWarning ? 'text-amber-500 font-bold' : 'text-emerald-300'}>
                            {pnsRisk.toFixed(0)}%
                        </span>
@@ -179,7 +215,10 @@ const SafetyConsole: React.FC = () => {
             {/* 2. VOP Safety */}
             <div className={`bg-slate-900/80 p-6 rounded-xl border border-slate-800/60 backdrop-blur-md shadow-xl transition-all hover:border-slate-700/80 group ${isTutHighlight(9) ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-950 z-10' : ''}`}>
                 <h3 className="font-bold text-slate-300 flex items-center gap-2 mb-6 text-xs uppercase tracking-wider border-b border-slate-800 pb-2 group-hover:text-blue-400 transition-colors">
-                    <Brain className="w-3 h-3 text-blue-500" /> VOP Safety Model (N)
+                    <Brain className="w-3 h-3 text-blue-500" /> 
+                    <ScientificCitation refId="VOP" position="right">
+                        <span>VOP Safety Model (N)</span>
+                    </ScientificCitation>
                 </h3>
                 
                 <TechSlider 
@@ -205,9 +244,12 @@ const SafetyConsole: React.FC = () => {
             <div className={`bg-slate-900/80 p-6 rounded-xl border border-slate-800/60 backdrop-blur-md space-y-4 shadow-xl transition-all hover:border-slate-700/80 group ${isTutHighlight(10) ? 'ring-2 ring-blue-400 ring-offset-2 ring-offset-slate-950 z-10' : ''}`}>
                 <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                      <h3 className="font-bold text-slate-300 flex items-center gap-2 text-xs uppercase tracking-wider group-hover:text-emerald-400 transition-colors">
-                        <Target className="w-3 h-3 text-emerald-500" /> B0 Shimming
+                        <Target className="w-3 h-3 text-emerald-500" /> 
+                        <ScientificCitation refId="Shimming" position="right">
+                            <span className="border-b border-dashed border-slate-700 hover:border-emerald-500 hover:text-emerald-400 transition-colors cursor-help">B0 Shimming</span>
+                        </ScientificCitation>
                     </h3>
-                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase ${shimError < 10 ? 'bg-emerald-900/20 text-emerald-400 border-emerald-800' : 'bg-red-900/20 text-red-400 border-red-800'}`}>
+                    <span className={`text-[10px] font-mono px-2 py-0.5 rounded border uppercase ${isShimGood ? 'bg-emerald-900/20 text-emerald-400 border-emerald-800' : 'bg-red-900/20 text-red-400 border-red-800'}`}>
                         Δ {shimError} Hz
                     </span>
                 </div>
@@ -246,19 +288,42 @@ const SafetyConsole: React.FC = () => {
                 <div className="absolute bottom-2 left-2 w-4 h-4 border-b-2 border-l-2 border-slate-700/50 z-30"></div>
 
                 {/* Base Brain Image */}
-                <img 
-                    src="https://images.unsplash.com/photo-1559757175-5700dde675bc?q=80&w=2831&auto=format&fit=crop" 
-                    alt="MRI Scan Preview"
-                    className="w-full h-full object-cover transition-all duration-500 opacity-70 group-hover:opacity-90"
-                    style={{
-                        filter: `
-                            blur(${totalBlur}px) 
-                            brightness(${Math.min(1.2, predictedSNR / 60)}) 
-                            contrast(${scanParams.sequence === 'GRE' ? 1.4 : 1.1})
-                            grayscale(100%)
-                        `
-                    }}
-                />
+                <div className="relative w-full h-full overflow-hidden">
+                    <img 
+                        src="https://images.unsplash.com/photo-1559757175-5700dde675bc?q=80&w=2831&auto=format&fit=crop" 
+                        alt="MRI Scan Preview"
+                        className="w-full h-full object-cover transition-all duration-500 opacity-70 group-hover:opacity-90"
+                        style={{
+                            filter: `
+                                blur(${totalBlur}px) 
+                                brightness(${Math.min(1.2, predictedSNR / 60)}) 
+                                contrast(${scanParams.sequence === 'GRE' ? 1.4 : 1.1})
+                                grayscale(100%)
+                            `
+                        }}
+                    />
+                    
+                    {/* Direction 1: Shimming Grid Visualization */}
+                    <div 
+                        className="absolute inset-0 border-slate-500/30 pointer-events-none transition-all duration-500 ease-out"
+                        style={{
+                            backgroundImage: `
+                                linear-gradient(to right, ${gridColor} 1px, transparent 1px),
+                                linear-gradient(to bottom, ${gridColor} 1px, transparent 1px)
+                            `,
+                            backgroundSize: '40px 40px',
+                            transform: shimTransform, // Apply dynamic 3D transform based on shimming values
+                            opacity: Math.max(0.3, Math.min(0.8, shimError / 30)) // Grid becomes more visible when error is high
+                        }}
+                    />
+                    {!isShimGood && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="bg-red-900/80 text-red-200 px-4 py-2 rounded backdrop-blur-sm border border-red-500/50 animate-pulse text-xs font-mono font-bold uppercase tracking-widest">
+                                Field Inhomogeneity Detected
+                            </div>
+                        </div>
+                    )}
+                </div>
 
                 {/* Overlays for defects */}
                 {hasRFArtifacts && (

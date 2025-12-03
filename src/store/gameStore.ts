@@ -33,6 +33,9 @@ interface GameState {
   budget: number;
   prestige: number;
   day: number;
+  
+  // Selected Theme/Scenario
+  selectedTheme: string | null;
 
   // Inventory & Unlocks
   unlockedMagnets: MagnetType[];
@@ -70,6 +73,7 @@ interface GameState {
 
   // Actions
   setBudget: (amount: number) => void;
+  setSelectedTheme: (themeId: string) => void;
   purchaseItem: (cost: number, item: Partial<LabSetup>) => void;
   setExperimentParam: (params: Partial<GameState['experimentParams']>) => void;
   setScanParam: (params: Partial<ScanParams>) => void;
@@ -105,6 +109,7 @@ const INITIAL_STATE = {
   budget: 2000000,
   prestige: 0,
   day: 1,
+  selectedTheme: null,
   unlockedMagnets: ['3T'] as MagnetType[],
   
   labSetup: {
@@ -146,6 +151,7 @@ export const useGameStore = create<GameState>((set) => ({
   ...INITIAL_STATE,
 
   setBudget: (amount) => set({ budget: amount }),
+  setSelectedTheme: (themeId) => set({ selectedTheme: themeId }),
 
   purchaseItem: (cost, item) => set((state) => {
     if (state.budget < cost) return state;
@@ -221,8 +227,21 @@ export const useGameStore = create<GameState>((set) => ({
     };
   }),
 
-  nextRound: () => set((state) => ({
+  nextRound: () => set((state) => {
+    // Dynamic Bailout: Ensure player has at least $200k to start a new round
+    // This prevents soft-locks if the player runs out of money.
+    const MINIMUM_BUDGET = 200000;
+    let newBudget = state.budget;
+    
+    if (state.budget < MINIMUM_BUDGET) {
+        newBudget = MINIMUM_BUDGET;
+        // You could add a toast or notification here in a real app
+        console.log("Emergency Grant Activated: Budget topped up to $200k");
+    }
+
+    return {
     day: state.day + 1,
+        budget: newBudget,
     gameStage: 'procurement',
     lastResult: null,
     shimming: { 
@@ -230,7 +249,8 @@ export const useGameStore = create<GameState>((set) => ({
       y: Math.floor(Math.random() * 60) - 30,
       z: Math.floor(Math.random() * 60) - 30 
     }
-  })),
+    };
+  }),
 
   resetGame: () => set(INITIAL_STATE),
 
